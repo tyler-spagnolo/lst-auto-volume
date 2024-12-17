@@ -1,0 +1,37 @@
+name: LST Auto Volume Maintenance
+
+on:
+  schedule:
+    - cron: "0 */2 * * *" # Run every 2 hours
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  swap:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Execute swap script
+        env:
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          RPC_URL: ${{ secrets.RPC_URL }}
+          LST_MINT: ${{ secrets.LST_MINT }}
+          SWAP_AMOUNT_SOL: ${{ secrets.SWAP_AMOUNT_SOL }}
+        run: node src/index.js
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: swap-logs
+          path: swap.log
